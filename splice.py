@@ -189,18 +189,18 @@ class SpliceClient:
 
 		mp3Out.write(r.content)
 
-	#Output the Ableton markers given the project uuid
-	def getAbletonMarkers(self, projectURL):
+		return filename
+
+	#Do some hack and slash to get the project name for a userProjectUUID
+	def getProjectPath(self, userProjectUUID):
 		import os, shutil, subprocess, signal, sys
-		
-		import fnmatch
+		import fnmatch, getpass
 
-		localSpliceRoot = "/Users/carthach/Splice"
-
-		print 
+		localUsername = getpass.getuser()
+		localSpliceRoot = '/Users/' + localUsername + '/Splice'
 
 		matches = []
-		for root, dirnames, filenames in os.walk(spliceRoot):
+		for root, dirnames, filenames in os.walk(localSpliceRoot):
 		  for filename in fnmatch.filter(filenames, 'project_cache.json'):
 		    matches.append(os.path.join(root, filename))
 
@@ -209,21 +209,14 @@ class SpliceClient:
 		    f = open(file, 'r')
 		    projectDataJSON = json.loads(f.read())
 		      
-		    if projectDataJSON['project_uuid'] == userProjectID:
-		        path = spliceRoot + "/" + projectDataJSON['original_path'] + "/" + projectDataJSON['als'][0]['original_path']
+		    if projectDataJSON['project_uuid'] == userProjectUUID:
+		        path = localSpliceRoot + "/" + projectDataJSON['original_path'] + "/" + projectDataJSON['als'][0]['original_path']
 		        
 		if path == "":
-		    "No path found, maybe it is still downloading in which case try again later"
+		    return "No path found has it downloaded yet?"
 		else:
-		    import gzip
-		    from bs4 import BeautifulSoup
-		    f = gzip.open(path, 'r')
-		    text = f.read()
-		    soup = BeautifulSoup(text)
-		    locators = soup.ableton.liveset.locators.locators.find_all('locator')
-		    endTime = soup.ableton.liveset.transport.looplength['value']
-		    
-		    print locators
+			return path
+		
 
 
 		
