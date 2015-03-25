@@ -21,7 +21,10 @@ projectURL = 'https://splice.com/haywyre/wip'
 projectUUID = sp.getURLToUUID(projectURL)
 
 #Get the entire project JSON if you want 
-# print(sp.getProjectJSON(projectURL))
+print(sp.getSpliceProjectJSON(projectURL))
+
+#You can download the preview mp3
+sp.getPreviewMP3(projectURL)
 
 #Splice the projectURL and get the userProjectUUID
 #Remember that the userProjectUUID corresponds to the project in your studio
@@ -38,7 +41,7 @@ for project in projectList:
 sp.openProject(userProjectUUID)
 
 #You can delete it with this call
-sp.deleteProject(userProjectUUID)
+# sp.deleteProject(userProjectUUID)
 
 
 

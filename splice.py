@@ -18,16 +18,32 @@ class SpliceClient:
 		r = requests.post('https://api.splice.com/www/sign_in',data=credentials)
 
 		if r.status_code == 401:
-			print "401 Error: check your login details"
+			return "401 Error: check your login details"
 		else:
 			self.cookies = r.cookies
 			self.connected = True
 
-	#List the project uuid, name and latest revision in JSON format
-	def listProjects(self):
+	def listSpliceProjects(self, daw="ableton", number=100):
 		if not self.connected:
-			print "Not connected"
-			return
+			return "Not connected"
+			
+
+		apiCallURL = self.spliceAPIRoot + '/www/releases?'
+		apiCallURL = apiCallURL + 'daw=' + daw
+		apiCallURL = apiCallURL + '&page=' + str(1)
+		apiCallURL = apiCallURL + '&per_page=' + str(number)
+		apiCallURL = apiCallURL + '&sort=trending'
+
+		r = requests.get(apiCallURL,cookies=self.cookies)
+
+		jsonData = json.loads(r.text)
+
+		return jsonData
+
+	#List the project uuid, name and latest revision in JSON format
+	def listUserProjects(self):
+		if not self.connected:
+			return "Not connected"			
 
 		apiCallURL = self.spliceAPIRoot + '/studio/projects'
 		r = requests.get(apiCallURL,cookies=self.cookies)
@@ -36,6 +52,7 @@ class SpliceClient:
 		your_keys = ['uuid', 'name', 'revision_uuid']
 		projectsOut = []
 
+		#Strip out the data we want - could be faster?
 		for project in jsonData['projects']:
 			newProjectData = { your_key: project[your_key] for your_key in your_keys }
 			projectsOut.append(newProjectData)
@@ -65,7 +82,7 @@ class SpliceClient:
 		spliceJSON = json.loads(r.text)
 
 		if r.status_code != requests.codes.ok:
-		    print "Request error: " + r.status_code
+		    return "Request error: " + str(r.status_code)
 		    
 		userProjectID = spliceJSON['project_uuid']
 		userRevID = spliceJSON['revision_uuid']
@@ -87,7 +104,7 @@ class SpliceClient:
 		r = requests.post(apiCallURL,cookies=self.cookies)
 
 		if r.status_code != 204:
-		    print "Request error: " + str(r.status_code)
+		    return "Request error: " + str(r.status_code)
 
 	#Delete the splice project for the given userProjectUUID
 	def deleteProject(self, userProjectUUID):
@@ -99,7 +116,7 @@ class SpliceClient:
 		r = requests.options(apiCallURL, cookies=self.cookies)
 
 		if r.status_code != requests.codes.ok:
-		    print "Request error: " + str(r.status_code)
+		    return "Request error: " + str(r.status_code)
 
 		r = requests.delete(apiCallURL,cookies=self.cookies)
 
@@ -125,7 +142,7 @@ class SpliceClient:
 		r = requests.get(apiCallURL,cookies=self.cookies)
 
 		if r.status_code != requests.codes.ok:
-		    print "Request error: " + str(r.status_code)
+		    return "Request error: " + str(r.status_code)
 
 		jsonResults = json.loads(r.text)
 
@@ -144,27 +161,31 @@ class SpliceClient:
 		r = requests.get(apiCallURL,cookies=self.cookies)
 
 		if r.status_code != requests.codes.ok:
-		    print "Request error: " + str(r.status_code)
+		    return "Request error: " + str(r.status_code)
 		
 		jsonResults = json.loads(r.text)
 
 		return jsonResults		
 
 
-	#Write the preview mp3 for the project at the url
-	def getPreviewMP3(self, projectURL, mp3Filename):
-		if destination == "":
-			return "Destination is empty"
+	#Write the preview mp3 for the project at the url, you can specify an optional filename
+	def getPreviewMP3(self, projectURL, filename=""):
+		if projectURL == "":
+			return "projectURL is empty"
+		
+		spliceProjectJSON = self.getSpliceProjectJSON(projectURL)
 
-		jsonResults = getSpliceProjectJSON(projectURL)
-
+		if filename == "":
+			filename = spliceProjectJSON['preview_url']
+			filename = filename.rsplit('/',1)[1]
+		
 		#Write the preview mp3 to the filesystem
-		mp3Out = file(mp3Filename, 'wb')
+		mp3Out = file(filename, 'wb')
 
-		r = requests.get(jsonResults['preview_url'])
+		r = requests.get(spliceProjectJSON['preview_url'])
 
 		if r.status_code != requests.codes.ok:
-		    print r.status_code
+		    return "Request error: " + str(r.status_code)
 
 		mp3Out.write(r.content)
 
