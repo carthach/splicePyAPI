@@ -84,10 +84,10 @@ class SpliceClient:
 		if r.status_code != requests.codes.ok:
 		    return "Request error: " + str(r.status_code)
 		    
-		userProjectID = spliceJSON['project_uuid']
+		userProjectUUID = spliceJSON['project_uuid']
 		userRevID = spliceJSON['revision_uuid']
 
-		return userProjectID
+		return userProjectUUID
 
 	#Open the splice project given the userProjectUUID, download if it hasn't been already
 	def openProject(self, userProjectUUID):
@@ -191,8 +191,25 @@ class SpliceClient:
 
 		return filename
 
+	#The cool Splice Player embed code, 
+	def getDNAPlayerEmbedCode(self, projectURL, width='100%', height='450'):
+		if projectURL == "":
+			return "projectURL is empty"
+		
+		spliceProjectJSON = self.getSpliceProjectJSON(projectURL)
+		release_uuid = spliceProjectJSON['related_sources'][0]['release_uuid']
+
+		dnaPlayerURL = 'https://splice.com/release/index.html?id=' + release_uuid + '&'
+
+		embedCode = '<iframe src=\'' + dnaPlayerURL +'\' '
+		embedCode = embedCode + 'width=\'' + width + '\''
+		embedCode = embedCode + ' height=\'' + width + '\''
+		embedCode = embedCode + ' scrolling=\'no\' frameborder=\'no\'></iframe>'
+
+		return embedCode
+
 	#Do some hack and slash to get the project name for a userProjectUUID
-	def getProjectPath(self, userProjectUUID):
+	def getLocalProjectPath(self, userProjectUUID):
 		import os, shutil, subprocess, signal, sys
 		import fnmatch, getpass
 
